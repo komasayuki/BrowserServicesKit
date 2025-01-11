@@ -68,12 +68,37 @@ public final class ConfigurationFetcher: ConfigurationFetching {
       An error of type Error is thrown if the configuration fails to fetch or validate.
     */
     public func fetch(_ configuration: Configuration, isDebug: Bool = false) async throws {
-        let requirements: APIResponseRequirements = isDebug ? .requireNonEmptyData : .default
-        let fetchResult = try await fetch(from: configuration.url, withEtag: etag(for: configuration), requirements: requirements)
-        if let data = fetchResult.data {
-            try validator.validate(data, for: configuration)
+        // let requirements: APIResponseRequirements = isDebug ? .requireNonEmptyData : .default
+        // let fetchResult = try await fetch(from: configuration.url, withEtag: etag(for: configuration), requirements: requirements)
+        // if let data = fetchResult.data {
+        //     try validator.validate(data, for: configuration)
+        // }
+        // try store(fetchResult, for: configuration)
+
+        
+        let fileName = configuration.url.lastPathComponent
+        let components = fileName.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: true)
+        
+        guard components.count == 2 else {
+            throw "illegal filename: \(fileName)"
         }
-        try store(fetchResult, for: configuration)
+    
+        let name = String(components[0])
+        let ext = String(components[1])
+
+        guard let fileURL = Bundle.main.url(forResource: fileName, withExtension: ext) else {
+            throw "can't find file: \(fileName)"
+        }
+        
+        do {
+            let data = try Data(contentsOf: fileURL)
+            fakeFetch(from: configuration.url, withEtag: "", data: data, for: configuration)
+
+        } catch {
+            throw "can't read file: \(fileName)"
+        }
+
+
     }
 
     /**
@@ -92,25 +117,29 @@ public final class ConfigurationFetcher: ConfigurationFetching {
        So, if any configuration fails to fetch or validate, none of the configurations will be stored.
     */
     public func fetch(all configurations: [Configuration]) async throws {
-        try await withThrowingTaskGroup(of: (Configuration, ConfigurationFetchResult).self) { group in
-            configurations.forEach { configuration in
-                group.addTask {
-                    let fetchResult = try await self.fetch(from: configuration.url, withEtag: self.etag(for: configuration), requirements: .all)
-                    if let data = fetchResult.data {
-                        try self.validator.validate(data, for: configuration)
-                    }
-                    return (configuration, fetchResult)
-                }
-            }
+        // try await withThrowingTaskGroup(of: (Configuration, ConfigurationFetchResult).self) { group in
+        //     configurations.forEach { configuration in
+        //         group.addTask {
+        //             let fetchResult = try await self.fetch(from: configuration.url, withEtag: self.etag(for: configuration), requirements: .all)
+        //             if let data = fetchResult.data {
+        //                 try self.validator.validate(data, for: configuration)
+        //             }
+        //             return (configuration, fetchResult)
+        //         }
+        //     }
 
-            var fetchResults = [(Configuration, ConfigurationFetchResult)]()
-            for try await result in group {
-                fetchResults.append(result)
-            }
+        //     var fetchResults = [(Configuration, ConfigurationFetchResult)]()
+        //     for try await result in group {
+        //         fetchResults.append(result)
+        //     }
 
-            for (configuration, fetchResult) in fetchResults {
-                try self.store(fetchResult, for: configuration)
-            }
+        //     for (configuration, fetchResult) in fetchResults {
+        //         try self.store(fetchResult, for: configuration)
+        //     }
+        // }
+
+        for configuration in configurations {
+            try await fetch(configuration)
         }
     }
 
@@ -122,12 +151,33 @@ public final class ConfigurationFetcher: ConfigurationFetching {
     }
 
     private func fetch(from url: URL, withEtag etag: String?, requirements: APIResponseRequirements) async throws -> ConfigurationFetchResult {
-        let configuration = APIRequest.Configuration(url: url,
-                                                     headers: APIRequest.Headers(etag: etag),
-                                                     cachePolicy: .reloadIgnoringLocalCacheData)
-        let request = APIRequest(configuration: configuration, requirements: requirements, urlSession: urlSession)
-        let (data, response) = try await request.fetch()
-        return (response.etag ?? "", data)
+        // let configuration = APIRequest.Configuration(url: url,
+        //                                              headers: APIRequest.Headers(etag: etag),
+        //                                              cachePolicy: .reloadIgnoringLocalCacheData)
+        // let request = APIRequest(configuration: configuration, requirements: requirements, urlSession: urlSession)
+        // let (data, response) = try await request.fetch()
+
+        let fileName = url.lastPathComponent
+        let components = fileName.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: true)
+        
+        guard components.count == 2 else {
+            throw "illegal filename: \(fileName)"
+        }
+    
+        let name = String(components[0])
+        let ext = String(components[1])
+
+        guard let fileURL = Bundle.main.url(forResource: fileName, withExtension: ext) else {
+            throw "can't find file: \(fileName)"
+        }
+        
+        do {
+            let data = try Data(contentsOf: fileURL)
+            return ("", data)
+        } catch {
+            throw "can't read file: \(fileName)"
+        }
+
     }
 
     private func store(_ result: ConfigurationFetchResult, for configuration: Configuration) throws {
