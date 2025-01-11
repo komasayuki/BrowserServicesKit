@@ -137,4 +137,9 @@ public final class ConfigurationFetcher: ConfigurationFetching {
         }
     }
 
+    public func fakeFetch(from url: URL, withEtag etag: String, data: Data, for configuration: Configuration) throws {
+        try store.saveData(data, for: configuration)
+        try store.saveEtag(etag, for: configuration)
+    }
+
 }
