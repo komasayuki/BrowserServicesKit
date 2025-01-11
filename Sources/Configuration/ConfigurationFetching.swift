@@ -80,14 +80,14 @@ public final class ConfigurationFetcher: ConfigurationFetching {
         let components = fileName.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: true)
         
         guard components.count == 2 else {
-            throw "illegal filename: \(fileName)"
+            throw NSError(domain: "illegal filename: \(fileName)", code: -1, userInfo: nil)
         }
     
         let name = String(components[0])
         let ext = String(components[1])
 
         guard let fileURL = Bundle.main.url(forResource: fileName, withExtension: ext) else {
-            throw "can't find file: \(fileName)"
+            throw NSError(domain: "can't find file: \(fileName)", code: -1, userInfo: nil)
         }
         
         do {
@@ -95,7 +95,7 @@ public final class ConfigurationFetcher: ConfigurationFetching {
             fakeFetch(from: configuration.url, withEtag: "", data: data, for: configuration)
 
         } catch {
-            throw "can't read file: \(fileName)"
+            throw NSError(domain: "can't read file: \(fileName)", code: -1, userInfo: nil)
         }
 
 
@@ -161,21 +161,21 @@ public final class ConfigurationFetcher: ConfigurationFetching {
         let components = fileName.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: true)
         
         guard components.count == 2 else {
-            throw "illegal filename: \(fileName)"
+            throw NSError(domain: "illegal filename: \(fileName)", code: -1, userInfo: nil)
         }
     
         let name = String(components[0])
         let ext = String(components[1])
 
         guard let fileURL = Bundle.main.url(forResource: fileName, withExtension: ext) else {
-            throw "can't find file: \(fileName)"
+            throw NSError(domain: "can't find file: \(fileName)", code: -1, userInfo: nil)
         }
         
         do {
             let data = try Data(contentsOf: fileURL)
             return ("", data)
         } catch {
-            throw "can't read file: \(fileName)"
+            throw NSError(domain: "can't read file: \(fileName)", code: -1, userInfo: nil)
         }
 
     }
