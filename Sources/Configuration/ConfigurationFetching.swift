@@ -92,7 +92,7 @@ public final class ConfigurationFetcher: ConfigurationFetching {
         
         do {
             let data = try Data(contentsOf: fileURL)
-            fakeFetch(from: configuration.url, withEtag: "", data: data, for: configuration)
+            try fakeFetch(from: configuration.url, withEtag: "", data: data, for: configuration)
 
         } catch {
             throw NSError(domain: "can't read file: \(fileName)", code: -1, userInfo: nil)
