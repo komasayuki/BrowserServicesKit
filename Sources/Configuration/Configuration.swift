@@ -39,7 +39,7 @@ public enum Configuration: String, CaseIterable, Sendable {
         self.urlProvider = urlProvider
     }
 
-    var url: URL {
+    public var url: URL {
         guard let urlProvider = Self.urlProvider else { fatalError("Please set the urlProvider before accessing url.") }
         return urlProvider.url(for: self)
     }
